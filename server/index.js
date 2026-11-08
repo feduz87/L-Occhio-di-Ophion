@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import pkg from 'pg';
 import pino from 'pino';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './api/auth.js';
 import characterRoutes from './api/characters.js';
 import mapRoutes from './api/map.js';
@@ -15,6 +17,9 @@ import combatRoutes from './api/combat.js';
 import checkpointRoutes from './api/checkpoint.js';
 import multiplayerRoutes from './api/multiplayer.js';
 import { errorHandler } from './middleware/errorHandler.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const { Pool } = pkg;
 dotenv.config();
@@ -153,6 +158,19 @@ app.use('/api/quests', questRoutes);
 app.use('/api/combat', combatRoutes);
 app.use('/api/checkpoints', checkpointRoutes);
 app.use('/api/multiplayer', multiplayerRoutes);
+
+// ============================================================================
+// Static Files - Serve Frontend
+// ============================================================================
+
+// Serve static files from client/public
+const publicPath = path.join(__dirname, '../client/public');
+app.use(express.static(publicPath));
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(publicPath, 'index.html'));
+});
 
 // 404 handler
 app.use((req, res) => {

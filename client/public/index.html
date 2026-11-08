@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L'Occhio di Ophion - RPG</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active">
+            <div class="loading-content">
+                <h1 class="game-title">L'Occhio di Ophion</h1>
+                <div class="spinner"></div>
+                <p>Inizializzazione in corso...</p>
+            </div>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen">
+            <div class="login-container">
+                <h1 class="game-title">L'Occhio di Ophion</h1>
+                <p class="subtitle">Strategic Turn-Based RPG</p>
+                
+                <form id="login-form" class="form">
+                    <div class="form-group">
+                        <input type="email" id="email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Accedi</button>
+                </form>
+
+                <div class="divider">O</div>
+
+                <button type="button" class="btn btn-secondary btn-block" onclick="showRegisterForm()">
+                    Crea Account
+                </button>
+
+                <div id="register-form-container" class="hidden">
+                    <form id="register-form" class="form">
+                        <div class="form-group">
+                            <input type="text" id="username" placeholder="Username" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="register-email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="register-password" placeholder="Password (min 8 caratteri)" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Registrati</button>
+                        <button type="button" class="btn btn-link btn-block" onclick="hideRegisterForm()">
+                            Indietro
+                        </button>
+                    </form>
+                </div>
+
+                <div id="login-message" class="message hidden"></div>
+            </div>
+        </div>
+
+        <!-- Character Selection Screen -->
+        <div id="character-screen" class="screen">
+            <div class="character-container">
+                <h1>Seleziona Personaggio</h1>
+                <div id="characters-list" class="characters-grid"></div>
+                <button class="btn btn-primary" onclick="showCharacterCreation()">
+                    + Crea Nuovo Personaggio
+                </button>
+                <button class="btn btn-secondary" onclick="logout()">Esci</button>
+            </div>
+        </div>
+
+        <!-- Character Creation Screen -->
+        <div id="creation-screen" class="screen">
+            <div class="creation-container">
+                <h2>Crea Personaggio</h2>
+                
+                <form id="creation-form" class="form">
+                    <div class="form-group">
+                        <label>Nome Personaggio</label>
+                        <input type="text" id="char-name" placeholder="Inserisci nome" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Razza</label>
+                        <select id="char-race" required>
+                            <option value="">Scegli razza...</option>
+                            <option value="human">Umano</option>
+                            <option value="elf">Elfo</option>
+                            <option value="dwarf">Nano</option>
+                            <option value="half_orc">Mezzo Orco</option>
+                            <option value="halfling">Halfling</option>
+                            <option value="tiefling">Tiefling</option>
+                            <option value="dragonborn">Draconiano</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Classe</label>
+                        <select id="char-class" required>
+                            <option value="">Scegli classe...</option>
+                            <option value="warrior">Guerriero</option>
+                            <option value="mage">Mago</option>
+                            <option value="rogue">Ladro</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Crea Personaggio</button>
+                    <button type="button" class="btn btn-secondary btn-block" onclick="showCharacterSelection()">
+                        Indietro
+                    </button>
+                </form>
+
+                <div id="creation-message" class="message hidden"></div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-layout">
+                <!-- Header -->
+                <div class="game-header">
+                    <div class="player-info">
+                        <h2 id="player-name">--</h2>
+                        <div class="stats-row">
+                            <span>Livello: <span id="player-level">1</span></span>
+                            <span>Exp: <span id="player-exp">0</span></span>
+                        </div>
+                    </div>
+                    <div class="health-bar">
+                        <div class="bar">
+                            <div id="health-fill" class="fill" style="width: 100%"></div>
+                        </div>
+                        <span id="health-text">100/100 HP</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="showMenu()">Menu</button>
+                </div>
+
+                <!-- Main Content -->
+                <div class="game-content">
+                    <!-- Map View -->
+                    <div id="map-view" class="map-view">
+                        <h3>Mappa del Mondo</h3>
+                        <div id="map-grid" class="map-grid"></div>
+                        <div class="location-info">
+                            <h4 id="location-name">Inizia qui...</h4>
+                            <p id="location-desc">Benvenuto in L'Occhio di Ophion!</p>
+                            <div id="location-actions" class="action-buttons"></div>
+                        </div>
+                    </div>
+
+                    <!-- Dialogue View -->
+                    <div id="dialogue-view" class="dialogue-view hidden">
+                        <div class="dialogue-box">
+                            <div class="dialogue-header">
+                                <h3 id="npc-name">NPC</h3>
+                                <button class="btn-close" onclick="closeDialogue()">&times;</button>
+                            </div>
+                            <div id="dialogue-text" class="dialogue-text"></div>
+                            <div id="dialogue-options" class="dialogue-options"></div>
+                        </div>
+                    </div>
+
+                    <!-- Combat View -->
+                    <div id="combat-view" class="combat-view hidden">
+                        <div class="combat-field">
+                            <div class="player-combat">
+                                <h4 id="player-combat-name">Giocatore</h4>
+                                <div class="combat-health">
+                                    <div id="player-combat-health" class="health-bar-small">
+                                        <div id="player-health-fill" class="fill" style="width: 100%"></div>
+                                    </div>
+                                    <span id="player-health-text">100/100</span>
+                                </div>
+                            </div>
+
+                            <div class="vs-separator">VS</div>
+
+                            <div class="enemy-combat">
+                                <h4 id="enemy-name">Nemico</h4>
+                                <div class="combat-health">
+                                    <div id="enemy-combat-health" class="health-bar-small">
+                                        <div id="enemy-health-fill" class="fill" style="width: 100%"></div>
+                                    </div>
+                                    <span id="enemy-health-text">50/50</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="combat-log" class="combat-log"></div>
+
+                        <div id="combat-actions" class="combat-actions"></div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="game-sidebar">
+                    <div class="sidebar-section">
+                        <h4>Inventario</h4>
+                        <div id="inventory-list" class="inventory-list">
+                            <p class="empty">Vuoto</p>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h4>Abilità</h4>
+                        <div id="abilities-list" class="abilities-list">
+                            <p class="empty">Nessuna abilità</p>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h4>Missioni</h4>
+                        <div id="quests-list" class="quests-list">
+                            <p class="empty">Nessuna missione</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Screen -->
+        <div id="menu-screen" class="screen">
+            <div class="menu-container">
+                <h2>Menu</h2>
+                <div class="menu-options">
+                    <button class="menu-btn" onclick="closeMenu()">Riprendi Gioco</button>
+                    <button class="menu-btn" onclick="showSettings()">Impostazioni</button>
+                    <button class="menu-btn" onclick="showStats()">Statistiche</button>
+                    <button class="menu-btn" onclick="saveGame()">Salva</button>
+                    <button class="menu-btn btn-danger" onclick="logout()">Esci</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div id="notification" class="notification hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
