@@ -7,6 +7,8 @@ import pino from 'pino';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './api/auth.js';
 import characterRoutes from './api/characters.js';
+import mapRoutes from './api/map.js';
+import travelRoutes from './api/travel.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const { Pool } = pkg;
@@ -139,6 +141,8 @@ app.get('/api/game/config', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/characters', characterRoutes);
+app.use('/api/map', mapRoutes);
+app.use('/api/travel', travelRoutes);
 
 // 404 handler
 app.use((req, res) => {
