@@ -12,6 +12,7 @@ import travelRoutes from './api/travel.js';
 import npcRoutes from './api/npcs.js';
 import questRoutes from './api/quests.js';
 import combatRoutes from './api/combat.js';
+import checkpointRoutes from './api/checkpoint.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const { Pool } = pkg;
@@ -149,6 +150,7 @@ app.use('/api/travel', travelRoutes);
 app.use('/api/npcs', npcRoutes);
 app.use('/api/quests', questRoutes);
 app.use('/api/combat', combatRoutes);
+app.use('/api/checkpoints', checkpointRoutes);
 
 // 404 handler
 app.use((req, res) => {
