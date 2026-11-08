@@ -1,9 +1,12 @@
 /**
  * Authentication API Routes
+ * 
+ * Uses centralized error handling via AppError + errorHandler middleware
  */
 
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.js';
+import { asyncHandler, AppError, ERROR_CODES } from '../middleware/errorHandler.js';
 import * as authService from '../services/auth.js';
 
 const router = express.Router();
@@ -12,112 +15,112 @@ const router = express.Router();
  * POST /api/auth/register
  * Register a new user
  */
-router.post('/register', async (req, res) => {
+router.post('/register', asyncHandler(async (req, res, next) => {
+  const { username, email, password } = req.body;
+
+  // Validation
+  if (!username || !email || !password) {
+    throw new AppError(
+      ERROR_CODES.VALIDATION_ERROR,
+      'username, email, and password are required',
+      400,
+      { required: ['username', 'email', 'password'] }
+    );
+  }
+
+  // Attempt registration
   try {
-    const { username, email, password } = req.body;
-
-    if (!username || !email || !password) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'username, email, and password are required',
-      });
-    }
-
     const user = await authService.registerUser(req.db, username, email, password);
-
     res.status(201).json({
       message: 'User registered successfully',
       user,
     });
   } catch (error) {
+    // Handle service-level errors
     if (error.message.includes('already exists')) {
-      return res.status(409).json({
-        error: 'Conflict',
-        message: error.message,
-      });
+      throw new AppError(ERROR_CODES.CONFLICT, error.message, 409);
     }
-
     if (error.message.includes('must be')) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: error.message,
-      });
+      throw new AppError(ERROR_CODES.VALIDATION_ERROR, error.message, 400);
     }
-
-    req.logger.error('Registration error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Registration failed',
-    });
+    throw error;
   }
-});
+}));
 
 /**
  * POST /api/auth/login
- * Login user
+ * Login user and return JWT token
  */
-router.post('/login', async (req, res) => {
+router.post('/login', asyncHandler(async (req, res, next) => {
+  const { username, password } = req.body;
+
+  // Validation
+  if (!username || !password) {
+    throw new AppError(
+      ERROR_CODES.VALIDATION_ERROR,
+      'username and password are required',
+      400,
+      { required: ['username', 'password'] }
+    );
+  }
+
+  // Attempt login
   try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'username and password are required',
-      });
-    }
-
     const user = await authService.loginUser(req.db, username, password);
-
     res.json({
       message: 'Login successful',
-      user,
+      token: user.token,
+      user: {
+        user_id: user.user_id,
+        username: user.username,
+        email: user.email,
+      },
+      expires_in: user.expires_in,
     });
   } catch (error) {
-    if (error.message.includes('Invalid')) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Invalid username or password',
-      });
+    if (error.message.includes('Invalid') || error.message.includes('required')) {
+      throw new AppError(
+        ERROR_CODES.UNAUTHORIZED,
+        'Invalid username or password',
+        401
+      );
     }
-
-    req.logger.error('Login error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Login failed',
-    });
+    throw error;
   }
-});
+}));
 
 /**
  * GET /api/auth/me
  * Get current authenticated user
  */
-router.get('/me', authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.user_id;
-    const user = await authService.getUserById(req.db, userId);
-
-    res.json(user);
-  } catch (error) {
-    req.logger.error('Get user error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to get user',
-    });
-  }
-});
+router.get('/me', authMiddleware, asyncHandler(async (req, res, next) => {
+  const userId = req.user.user_id;
+  const user = await authService.getUserById(req.db, userId);
+  
+  res.json({
+    user: {
+      user_id: user.id,
+      username: user.username,
+      email: user.email,
+      created_at: user.created_at,
+      last_login: user.last_login,
+    },
+  });
+}));
 
 /**
  * POST /api/auth/logout
  * Logout user (client-side token deletion)
+ * 
+ * JWT is stateless, so logout is handled client-side
+ * This endpoint just confirms the logout action
  */
 router.post('/logout', authMiddleware, (req, res) => {
-  // JWT is stateless, so logout just returns success
-  // Client deletes token from localStorage
   res.json({
     message: 'Logout successful',
+    user_id: req.user.user_id,
   });
 });
 
 export default router;
+

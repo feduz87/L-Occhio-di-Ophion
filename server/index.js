@@ -4,8 +4,10 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import pkg from 'pg';
 import pino from 'pino';
+import rateLimit from 'express-rate-limit';
 import authRoutes from './api/auth.js';
 import characterRoutes from './api/characters.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const { Pool } = pkg;
 dotenv.config();
@@ -53,6 +55,31 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || 'localhost';
 
+// ============================================================================
+// Rate Limiting Middleware
+// ============================================================================
+
+// Global rate limiter: 100 requests per 15 minutes
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // max requests per windowMs
+  message: 'Too many requests, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'test', // Disable in test mode
+});
+
+// Auth rate limiter: 5 attempts per 15 minutes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many login/register attempts, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'test',
+  skipSuccessfulRequests: false, // Count all requests, even successful
+});
+
 // Middleware
 app.use(helmet());
 app.use(cors({
@@ -61,6 +88,11 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply rate limiting
+app.use('/api/', globalLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/login', authLimiter);
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -110,14 +142,14 @@ app.use('/api/characters', characterRoutes);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({
+    error: 'NOT_FOUND',
+    message: 'Route not found',
+  });
 });
 
-// Error handler
-app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
+// Centralized Error Handler (must be LAST)
+app.use(errorHandler);
 
 // ============================================================================
 // Server startup

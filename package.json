@@ -11,7 +11,9 @@
     "db:seed": "node server/db/seed.js",
     "db:reset": "node server/db/reset.js",
     "db:setup": "npm run db:init && npm run db:seed",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run server/tests/integration.test.js",
     "test:coverage": "vitest --coverage",
     "lint": "eslint server/ client/src/",
     "format": "prettier --write ."
@@ -25,7 +27,9 @@
     "jsonwebtoken": "^9.1.2",
     "uuid": "^9.0.1",
     "pino": "^8.17.2",
-    "axios": "^1.6.2"
+    "axios": "^1.6.2",
+    "bcrypt": "^5.1.1",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
     "vitest": "^1.0.4",

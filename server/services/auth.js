@@ -1,21 +1,62 @@
 /**
  * Authentication Service - User registration & login
+ * 
+ * Password hashing: Uses bcrypt (production-ready)
+ * Fallback: SHA-256 if bcrypt not available (for development)
  */
 
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcrypt';
+
+const BCRYPT_ROUNDS = 12;
+const FALLBACK_TO_SHA256 = process.env.FALLBACK_PASSWORD_HASHING === 'true';
 
 /**
- * Hash password using SHA-256
- * (In production, use bcrypt!)
+ * Hash password using bcrypt or SHA-256 (fallback)
+ * @param {string} password - Plain text password
+ * @returns {Promise<string>} Hashed password
  */
-export function hashPassword(password) {
+export async function hashPassword(password) {
+  try {
+    if (!FALLBACK_TO_SHA256) {
+      return await bcrypt.hash(password, BCRYPT_ROUNDS);
+    }
+  } catch (err) {
+    console.warn('⚠️  Bcrypt not available, falling back to SHA-256 (INSECURE for production)');
+  }
+  
+  // Fallback to SHA-256 (development only)
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
 /**
+ * Verify password against hash
+ * @param {string} password - Plain text password
+ * @param {string} hash - Hashed password
+ * @returns {Promise<boolean>} True if password matches
+ */
+export async function verifyPassword(password, hash) {
+  try {
+    // Try bcrypt first
+    if (hash.startsWith('$2')) {
+      return await bcrypt.compare(password, hash);
+    }
+  } catch (err) {
+    console.warn('⚠️  Bcrypt verification failed, falling back to SHA-256');
+  }
+  
+  // Fallback to SHA-256 comparison (development only)
+  const sha256Hash = crypto.createHash('sha256').update(password).digest('hex');
+  return sha256Hash === hash;
+}
+
+/**
  * Generate JWT token
+ * @param {string} userId - User ID
+ * @param {string} username - Username
+ * @returns {string} JWT token
  */
 export function generateToken(userId, username) {
   const token = jwt.sign(
@@ -34,6 +75,11 @@ export function generateToken(userId, username) {
 
 /**
  * Register new user
+ * @param {Pool} db - Database pool
+ * @param {string} username - Username
+ * @param {string} email - Email address
+ * @param {string} password - Plain text password
+ * @returns {Promise<Object>} User object with token
  */
 export async function registerUser(db, username, email, password) {
   // Validate input
@@ -60,7 +106,7 @@ export async function registerUser(db, username, email, password) {
   }
 
   // Hash password
-  const passwordHash = hashPassword(password);
+  const passwordHash = await hashPassword(password);
 
   // Create user
   const userId = uuidv4();
@@ -83,6 +129,10 @@ export async function registerUser(db, username, email, password) {
 
 /**
  * Login user
+ * @param {Pool} db - Database pool
+ * @param {string} username - Username or email
+ * @param {string} password - Plain text password
+ * @returns {Promise<Object>} User object with token
  */
 export async function loginUser(db, username, password) {
   if (!username || !password) {
@@ -102,8 +152,8 @@ export async function loginUser(db, username, password) {
   const user = result.rows[0];
 
   // Verify password
-  const passwordHash = hashPassword(password);
-  if (user.password_hash !== passwordHash) {
+  const passwordMatch = await verifyPassword(password, user.password_hash);
+  if (!passwordMatch) {
     throw new Error('Invalid username or password');
   }
 
@@ -127,6 +177,9 @@ export async function loginUser(db, username, password) {
 
 /**
  * Get user by ID
+ * @param {Pool} db - Database pool
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} User object
  */
 export async function getUserById(db, userId) {
   const result = await db.query(
@@ -140,3 +193,4 @@ export async function getUserById(db, userId) {
 
   return result.rows[0];
 }
+
