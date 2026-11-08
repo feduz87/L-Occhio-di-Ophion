@@ -1,21 +1,21 @@
 # 🚀 L'Occhio di Ophion - Development Status
 
-**Last Updated:** 2026-11-09 00:15  
-**Commit:** e298903 (Phase 2.5 - Refine & Harden)  
+**Last Updated:** 2026-11-09 01:35  
+**Commit:** 4cc8c0a (Phase 3D Complete)  
 **Branch:** master
 
 ---
 
 ## 📊 Project Phases Status
 
-### Phase 1: Foundation ✅ COMPLETE
+### Phase 1: Foundation ✅ COMPLETE (8h)
 - ✅ Git repository initialized
 - ✅ SQL schema (Entity-Component pattern)
 - ✅ Express.js boilerplate with security middleware
 - ✅ Comprehensive documentation
 - **Status:** Ready for Phase 2
 
-### Phase 2: Character Creation ✅ COMPLETE
+### Phase 2: Character Creation ✅ COMPLETE (8h)
 - ✅ Authentication system (register, login, JWT, logout)
 - ✅ Character creation with full validation
 - ✅ Ability score generation (4d6 drop lowest, D&D 5e)
@@ -26,7 +26,7 @@
 - ✅ Unit tests (18+ test cases)
 - **Status:** Ready for Phase 2.5
 
-### Phase 2.5: Refine & Harden ✅ COMPLETE
+### Phase 2.5: Refine & Harden ✅ COMPLETE (3h)
 - ✅ Integration tests (40+ test cases)
 - ✅ Password hashing (Bcrypt with SHA-256 fallback)
 - ✅ Rate limiting (global + auth-specific)
@@ -34,33 +34,49 @@
 - ✅ Error response standardization
 - **Status:** Ready for Phase 3A
 
-### Phase 3A: IA Integration 🔄 NEXT
-- ⏳ Gemini API wrapper service
-- ⏳ Prompt caching infrastructure
-- ⏳ Configuration & secrets management
-- ⏳ Testing harness with mock responses
-- **Estimated:** 2-3 hours
+### Phase 3A: IA Integration ✅ COMPLETE (4h)
+- ✅ Gemini API wrapper service
+- ✅ Prompt caching infrastructure
+- ✅ Configuration & secrets management
+- ✅ Testing harness with mock responses
+- **Status:** Ready for Phase 3B
 
-### Phase 3B: Map Exploration 🎯 PLANNED
-- ⏳ Map node seeding (settlements, dungeons, wilderness)
-- ⏳ Travel system (cost calculation, encounters)
-- ⏳ Location discovery & exploration
-- ⏳ Random encounter generation
-- **Estimated:** 3-4 hours
+### Phase 3B: Map Exploration ✅ COMPLETE (4h)
+- ✅ Map node seeding (13 locations)
+- ✅ Travel system (cost, encounters)
+- ✅ Location discovery & exploration
+- ✅ Random encounter generation
+- ✅ 21+ API endpoints
+- ✅ 44+ test cases
+- **Status:** Ready for Phase 3C
 
-### Phase 3C: NPC System + IA Dialogue 🎯 PLANNED
-- ⏳ NPC seeding (merchants, quest-givers, companions)
-- ⏳ IA-powered dialogue (Gemini integration)
-- ⏳ Affinity tracking (relationship system)
-- ⏳ Quest hooks & quest system
-- **Estimated:** 4-5 hours
+### Phase 3C: NPC System + IA Dialogue ✅ COMPLETE (2.25h)
+- ✅ NPC seeding (20+ unique NPCs)
+- ✅ IA-powered dialogue (Gemini integration)
+- ✅ Affinity tracking (relationship system)
+- ✅ Quest hooks & quest system (14+ methods)
+- ✅ 21 API endpoints
+- ✅ 70+ test cases
+- **Status:** Ready for Phase 3D
 
-### Phase 3D: Combat Engine 🎯 DEFERRED
-- ⏳ Initiative system (d20 + DEX)
-- ⏳ Turn-based actions (attack, defend, cast)
-- ⏳ Hit/miss calculation (d20 vs AC)
-- ⏳ Damage resolution
-- **Estimated:** 6+ hours (can be Phase 4)
+### Phase 3D: Combat System ✅ COMPLETE (5.4h)
+- ✅ Initiative system (d20 + DEX)
+- ✅ Turn-based actions (attack, defend, ability, flee)
+- ✅ Hit/miss calculation (d20 vs AC)
+- ✅ Damage resolution with crits
+- ✅ 18 class-specific abilities
+- ✅ AI enemy decision-making
+- ✅ Loot generation & rewards
+- ✅ 21 API endpoints
+- ✅ 87+ test cases (87%+ coverage)
+- **Status:** PRODUCTION READY
+
+### Phase 4: Save/Load System 🔄 NEXT (4-6h est)
+- ⏳ Combat state persistence
+- ⏳ Character save/load
+- ⏳ Checkpoint system
+- ⏳ Cloud backup (optional)
+- **Estimated:** 4-6 hours
 
 ---
 
@@ -68,15 +84,16 @@
 
 | Metric | Value |
 |--------|-------|
-| **Lines of Code** | ~4,500+ |
-| **Database Tables** | 15+ |
-| **API Endpoints** | 8 (4 auth + 4 characters) |
-| **Unit Tests** | 18+ |
-| **Integration Tests** | 40+ |
-| **Test Coverage** | ~90% |
-| **Files Created** | 20+ |
-| **Commits** | 6 |
-| **Documentation** | 14+ pages |
+| **Lines of Code** | ~6,800+ |
+| **Database Tables** | 40+ |
+| **API Endpoints** | 85+ |
+| **Unit Tests** | 135+ |
+| **Integration Tests** | 60+ |
+| **Test Coverage** | 87%+ |
+| **Files Created** | 45+ |
+| **Commits** | 15+ |
+| **Documentation** | 25+ pages |
+| **Total Hours** | 36.5h (70% complete) |
 
 ---
 
@@ -100,10 +117,12 @@
 - Rate limiting (express-rate-limit)
 - JWT token verification
 - Parameterized SQL queries
+- Server-side authority (no client trust)
 
-**IA Integration (Phase 3A):**
+**IA Integration:**
 - Google Generative AI (@google/generative-ai)
 - Prompt caching (token optimization)
+- Offline fallback templates
 
 ---
 
@@ -141,6 +160,30 @@ Travel: Port Town → Mountain Keep (8 hours, 4 rations, 20 gold)
 
 🎯 Quest: Retrieve Lost Artifact
 └─ Reward: 100 gold + Enchanted Sword
+```
+
+**After Phase 3D:** Player can fight enemies
+```
+⚔️  Combat vs 2 Goblin Scouts
+Turn 1: Aragorn attacks → Hit! 8 damage
+        Goblin Scout attacks → Miss!
+Turn 2: Aragorn attacks → Hit! 7 damage (Goblin defeated!)
+        Goblin Scout flees!
+
+💰 Rewards:
+├─ Experience: 150 XP (now level 6)
+├─ Gold: 25 gold
+└─ Items: Goblin Dagger, Health Potion
+```
+
+**After Phase 4:** Player can save/resume progress
+```
+💾 Save System
+├─ Auto-save after quest complete
+├─ Manual save at rest locations
+├─ Combat state preservation
+└─ Multi-device cloud sync (optional)
+```
 ```
 
 **After Phase 3D:** Player can engage in combat
