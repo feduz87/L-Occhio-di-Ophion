@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#11130f">
+    <title>L'Occhio di Ophion — Cronache di Brumafonda</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="game.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <p class="eyebrow">Un GDR fantasy a turni</p>
+        <h1>L'Occhio <span>di Ophion</span></h1>
+        <p class="subtitle">Le cronache di Brumafonda</p>
+      </header>
+
+      <section class="panel introduction" id="setup">
+        <div>
+          <p class="eyebrow">La tua avventura comincia qui</p>
+          <h2>Oltre la nebbia</h2>
+          <p>Un antico sguardo si è risvegliato sotto le rovine. Attraversa il bosco, affronta le sue creature e scopri cosa si nasconde a Brumafonda.</p>
+        </div>
+        <form id="hero-form">
+          <label for="hero-name">Nome dell'eroe</label>
+          <input id="hero-name" name="name" maxlength="18" placeholder="Es. Arven" autocomplete="off">
+          <label for="hero-class">Scegli il tuo cammino</label>
+          <select id="hero-class" name="class">
+            <option value="knight">Cavaliere — resistente e potente</option>
+            <option value="mage">Arcanista — magia e astuzia</option>
+            <option value="ranger">Ranger — rapido e preciso</option>
+          </select>
+          <button class="button primary" type="submit">Inizia il viaggio <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+
+      <section class="adventure" id="adventure" hidden aria-live="polite">
+        <div class="status-grid">
+          <section class="panel hero-card" aria-label="Stato dell'eroe">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Il tuo eroe</p>
+                <h2 id="hero-title"></h2>
+              </div>
+              <span class="level-badge" id="hero-level">Liv. 1</span>
+            </div>
+            <p class="class-name" id="hero-class-name"></p>
+            <div class="stat-line"><span>Salute</span><strong id="hero-health-text"></strong></div>
+            <div class="meter"><span id="hero-health-meter"></span></div>
+            <div class="stat-line secondary-stat"><span>Esperienza</span><strong id="hero-xp-text"></strong></div>
+            <div class="meter xp-meter"><span id="hero-xp-meter"></span></div>
+            <p class="supplies">Pozioni: <strong id="potion-count"></strong></p>
+          </section>
+
+          <section class="panel enemy-card" aria-label="Nemico">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow" id="encounter-label">Incontro</p>
+                <h2 id="enemy-title"></h2>
+              </div>
+              <span class="enemy-mark" aria-hidden="true">✦</span>
+            </div>
+            <p class="enemy-description" id="enemy-description"></p>
+            <div class="stat-line"><span>Salute</span><strong id="enemy-health-text"></strong></div>
+            <div class="meter enemy-meter"><span id="enemy-health-meter"></span></div>
+          </section>
+        </div>
+
+        <section class="panel battle-panel">
+          <div class="battle-heading">
+            <div>
+              <p class="eyebrow">Il sentiero di Brumafonda</p>
+              <h2>Il tuo turno</h2>
+            </div>
+            <span class="turn-indicator" id="turn-indicator">Scegli un'azione</span>
+          </div>
+          <div class="actions" id="actions">
+            <button class="button primary" id="attack-button" type="button">Attacca</button>
+            <button class="button secondary" id="potion-button" type="button">Usa pozione</button>
+            <button class="button quiet" id="defend-button" type="button">Parati</button>
+          </div>
+          <button class="button primary next-button" id="next-button" type="button" hidden>Prosegui nel bosco →</button>
+          <div class="battle-log" id="battle-log" role="log" aria-live="polite" aria-relevant="additions"></div>
+        </section>
+        <button class="restart-link" id="restart-button" type="button">Ricomincia l'avventura</button>
+      </section>
+
+      <footer>
+        <span>Un piccolo prototipo narrativo</span>
+        <span>Ogni scelta apre una nuova storia.</span>
+      </footer>
+    </main>
+  </body>
+</html>
