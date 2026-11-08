@@ -10,6 +10,7 @@
     "db:init": "node server/db/init.js",
     "db:seed": "node server/db/seed.js",
     "db:reset": "node server/db/reset.js",
+    "db:setup": "npm run db:init && npm run db:seed",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "lint": "eslint server/ client/src/",

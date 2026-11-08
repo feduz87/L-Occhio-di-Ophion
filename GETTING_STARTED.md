@@ -62,10 +62,27 @@ Output should show:
 ✅ Database initialization successful!
 ```
 
-### 5. Seed Initial Data (TODO)
+### 5. Seed Initial Data (Items, Equipment, Consumables)
 
 ```bash
 npm run db:seed
+```
+
+Output should show:
+```
+📋 Seeding weapons...
+🛡️  Seeding armor...
+🧪 Seeding consumables...
+📦 Seeding ingredients...
+✨ Seeding special items...
+🎯 Seeding arrows...
+✅ Item seeding complete!
+🎉 Database seeding successful!
+```
+
+Or run both at once:
+```bash
+npm run db:setup
 ```
 
 ### 6. Start Development Server
@@ -92,6 +109,66 @@ Should return:
   "status": "ok",
   "database": "connected",
   "timestamp": "2026-11-08T23:30:00.000Z"
+}
+```
+
+### 8. Test Character Creation (with Authentication)
+
+First, register a user:
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testplayer",
+    "email": "test@example.com",
+    "password": "password123"
+  }'
+```
+
+Response:
+```json
+{
+  "message": "User registered successfully",
+  "user": {
+    "user_id": "uuid...",
+    "username": "testplayer",
+    "token": "jwt_token..."
+  }
+}
+```
+
+Then create a character using the token:
+```bash
+curl -X POST http://localhost:3000/api/characters \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "name": "Aragorn",
+    "race": "Uomini",
+    "heritage": "Sangue Antico",
+    "class": "Guerriero"
+  }'
+```
+
+Response:
+```json
+{
+  "message": "Character created successfully",
+  "character": {
+    "character_id": "uuid...",
+    "name": "Aragorn",
+    "race": "Uomini",
+    "heritage": "Sangue Antico",
+    "class": "Guerriero",
+    "level": 1,
+    "hit_points": 12,
+    "armor_class": 12,
+    "stats": {
+      "strength": 15,
+      "dexterity": 11,
+      ...
+    }
+  }
 }
 ```
 

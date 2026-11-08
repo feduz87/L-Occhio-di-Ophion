@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import pkg from 'pg';
 import pino from 'pino';
+import authRoutes from './api/auth.js';
+import characterRoutes from './api/characters.js';
 
 const { Pool } = pkg;
 dotenv.config();
@@ -69,6 +71,7 @@ app.use((req, res, next) => {
 // Attach database pool to request
 app.use((req, res, next) => {
   req.db = pool;
+  req.logger = logger;
   next();
 });
 
@@ -91,7 +94,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Placeholder API routes (to be implemented)
+// Game config
 app.get('/api/game/config', (req, res) => {
   res.json({
     game: 'L\'Occhio di Ophion',
@@ -100,6 +103,10 @@ app.get('/api/game/config', (req, res) => {
     game_difficulty: process.env.GAME_DIFFICULTY,
   });
 });
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/characters', characterRoutes);
 
 // 404 handler
 app.use((req, res) => {

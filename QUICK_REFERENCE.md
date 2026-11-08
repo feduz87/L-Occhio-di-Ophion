@@ -103,20 +103,20 @@ docs/
 
 ## 🔗 API Quick Ref
 
-### Authentication
+### Authentication ✅ IMPLEMENTED
 ```
-POST   /api/auth/register
-POST   /api/auth/login
-GET    /api/auth/me
-POST   /api/auth/logout
+POST   /api/auth/register     ← Create new user
+POST   /api/auth/login        ← User login (returns JWT)
+GET    /api/auth/me           ← Get current user (requires JWT)
+POST   /api/auth/logout       ← Logout (client clears token)
 ```
 
-### Characters
+### Characters ✅ IMPLEMENTED
 ```
-GET    /api/characters
-POST   /api/characters
-GET    /api/characters/:id
-PATCH  /api/characters/:id
+GET    /api/characters        ← List user's characters
+POST   /api/characters        ← Create new character
+GET    /api/characters/:id    ← Get character details
+PATCH  /api/characters/:id    ← Update character name
 ```
 
 ### World

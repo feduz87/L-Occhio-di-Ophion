@@ -40,25 +40,35 @@
 **Total Schema:** ~23,300 lines  
 **Total Tables:** 50+
 
-### `server/api/` (API Endpoints - TODO)
-- `auth.js` — Registration, login, JWT
-- `characters.js` — Character CRUD
-- `game.js` — World/exploration
-- `dialogue.js` — NPC conversations
-- `combat.js` — Combat endpoints
-- `quests.js` — Quest system
+### `server/api/` (API Endpoints)
 
-### `server/services/` (Business Logic - TODO)
-- `auth.js` — Authentication logic
-- `combat.js` — Combat engine
-- `quest.js` — Quest generation
-- `ia.js` — Gemini API integration
-- `game_time.js` — World clock
+| File | Purpose | Status |
+|------|---------|--------|
+| **auth.js** | Registration, login, user endpoints | ✅ DONE |
+| **characters.js** | Character CRUD operations | ✅ DONE |
+| **game.js** | World/exploration | 🔜 TODO |
+| **dialogue.js** | NPC conversations | 🔜 TODO |
+| **combat.js** | Combat endpoints | 🔜 TODO |
+| **quests.js** | Quest system | 🔜 TODO |
 
-### `server/middleware/` (Middleware - TODO)
-- `auth.js` — JWT verification
-- `validation.js` — Input validation
-- `error.js` — Error handling
+### `server/services/` (Business Logic)
+
+| File | Purpose | Status |
+|------|---------|--------|
+| **auth.js** | User registration, login, JWT generation | ✅ DONE |
+| **character.js** | Character creation, ability scores, equipment | ✅ DONE |
+| **combat.js** | Combat engine | 🔜 TODO |
+| **quest.js** | Quest generation | 🔜 TODO |
+| **ia.js** | Gemini API integration | 🔜 TODO |
+| **game_time.js** | World clock | 🔜 TODO |
+
+### `server/middleware/` (Middleware)
+
+| File | Purpose | Status |
+|------|---------|--------|
+| **auth.js** | JWT verification, authMiddleware | ✅ DONE |
+| **validation.js** | Input validation (character, UUID) | ✅ DONE |
+| **error.js** | Error handling | 🔜 TODO |
 
 ### `server/models/` (Data Models - TODO)
 - `database.js` — Connection pool, query helpers
