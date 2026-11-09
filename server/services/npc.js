@@ -10,8 +10,8 @@
  * - Companion recruitment
  */
 
-const db = require('../db/init');
-const { generateText, generateDialogue } = require('./gemini');
+import db from '../db/init.js';
+import { generateText, generateDialogue } from './gemini.js';
 
 class NPCService {
   /**
@@ -507,4 +507,4 @@ class NPCService {
   }
 }
 
-module.exports = NPCService;
+export default NPCService;
