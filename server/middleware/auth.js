@@ -50,4 +50,7 @@ export function optionalAuthMiddleware(req, res, next) {
   next();
 }
 
-export default authMiddleware;
+export default {
+  required: authMiddleware,
+  optional: optionalAuthMiddleware
+};
