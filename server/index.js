@@ -25,17 +25,21 @@ const { Pool } = pkg;
 dotenv.config();
 
 // Logger setup
-const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'SYS:standard',
-      ignore: 'pid,hostname',
-    },
-  },
-});
+const logger = pino(
+  process.env.NODE_ENV === 'production'
+    ? { level: process.env.LOG_LEVEL || 'info' }
+    : {
+        level: process.env.LOG_LEVEL || 'info',
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            translateTime: 'SYS:standard',
+            ignore: 'pid,hostname',
+          },
+        },
+      }
+);
 
 // Database setup
 const pool = new Pool({
