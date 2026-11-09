@@ -8,7 +8,7 @@
  * - Location state updates (weather, danger level adjustments)
  */
 
-const db = require('../db/init');
+import pool from '../db/pool.js';
 
 class MapService {
   /**
@@ -461,4 +461,4 @@ class MapService {
   }
 }
 
-module.exports = MapService;
+export default MapService;

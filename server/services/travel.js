@@ -9,8 +9,8 @@
  * - Location transitions and arrival handling
  */
 
-const db = require('../db/init');
-const { generateNarrative } = require('./gemini');
+import pool from '../db/pool.js';
+import { generateNarrative } from './gemini.js';
 
 class TravelService {
   /**
@@ -554,4 +554,4 @@ class TravelService {
   }
 }
 
-module.exports = TravelService;
+export default TravelService;

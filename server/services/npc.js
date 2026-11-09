@@ -10,7 +10,7 @@
  * - Companion recruitment
  */
 
-import db from '../db/init.js';
+import pool from '../db/pool.js';
 import { generateText, generateDialogue } from './gemini.js';
 
 class NPCService {

@@ -9,7 +9,7 @@
  * - Quest statistics and history
  */
 
-const db = require('../db/init');
+import pool from '../db/pool.js';
 
 class QuestService {
   /**
@@ -530,4 +530,4 @@ class QuestService {
   }
 }
 
-module.exports = QuestService;
+export default QuestService;
