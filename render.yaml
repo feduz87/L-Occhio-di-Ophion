@@ -25,7 +25,6 @@ services:
 
   - type: pserv
     name: occhio-di-ophion-db
-    ipAddress: 10.0.0.2
     plan: free
     postgresVersion: 15
     initialDatabase: ophion_game
