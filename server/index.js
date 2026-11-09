@@ -60,9 +60,10 @@ const testConnection = async () => {
   try {
     const result = await pool.query('SELECT NOW()');
     logger.info('✅ Database connected:', result.rows[0]);
+    return true;
   } catch (err) {
-    logger.error('❌ Database connection failed:', err);
-    process.exit(1);
+    logger.warn('⚠️ Database connection warning:', err.message);
+    return false;
   }
 };
 
