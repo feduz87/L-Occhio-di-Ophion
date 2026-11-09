@@ -1,8 +1,8 @@
 // L'Occhio di Ophion - Multiplayer Service
 // Manages shared instances, player groups, guilds, trades, PvP rankings
 
-const { db } = require('../config/database');
-const logger = require('../utils/logger');
+import pool from '../db/pool.js';
+import logger from '../utils/logger.js';
 
 class MultiplayerService {
   // ==================== SHARED INSTANCES ====================
@@ -15,7 +15,7 @@ class MultiplayerService {
       const maxPlayers = options.maxPlayers || 100;
       const isPvp = options.isPvp || false;
       
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT create_instance($1, $2, $3, $4, $5) AS instance_id`,
         [worldId, instanceType, instanceName, maxPlayers, isPvp]
       );
@@ -35,7 +35,7 @@ class MultiplayerService {
    */
   async joinInstance(instanceId, characterId, isLeader = false) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT join_instance($1, $2, $3) AS success`,
         [instanceId, characterId, isLeader]
       );
@@ -58,7 +58,7 @@ class MultiplayerService {
    */
   async leaveInstance(instanceId, characterId) {
     try {
-      await db.query(
+      await pool.query(
         `SELECT leave_instance($1, $2)`,
         [instanceId, characterId]
       );
@@ -97,7 +97,7 @@ class MultiplayerService {
       
       query += ` ORDER BY actual_players DESC LIMIT 50`;
       
-      const result = await db.query(query, params);
+      const result = await pool.query(query, params);
       return result.rows;
     } catch (error) {
       logger.error(`❌ Failed to get active instances: ${error.message}`);
@@ -110,7 +110,7 @@ class MultiplayerService {
    */
   async getInstanceDetails(instanceId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT * FROM shared_instances WHERE id = $1`,
         [instanceId]
       );
@@ -131,7 +131,7 @@ class MultiplayerService {
    */
   async getInstanceParticipants(instanceId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           ip.character_id,
@@ -170,7 +170,7 @@ class MultiplayerService {
         difficulty: options.difficulty || 'normal'
       };
       
-      const result = await db.query(
+      const result = await pool.query(
         `
         INSERT INTO player_groups (leader_id, group_name, group_type, max_members, group_settings)
         VALUES ($1, $2, $3, $4, $5)
@@ -182,7 +182,7 @@ class MultiplayerService {
       const groupId = result.rows[0].id;
       
       // Add leader as member
-      await db.query(
+      await pool.query(
         `INSERT INTO player_group_members (group_id, character_id, role)
          VALUES ($1, $2, $3)`,
         [groupId, leaderId, 'leader']
@@ -202,7 +202,7 @@ class MultiplayerService {
   async joinGroup(groupId, characterId) {
     try {
       // Check capacity
-      const groupResult = await db.query(
+      const groupResult = await pool.query(
         `
         SELECT pg.max_members, COUNT(pgm.id) as current_members
         FROM player_groups pg
@@ -223,7 +223,7 @@ class MultiplayerService {
         throw new Error('Group is full');
       }
       
-      await db.query(
+      await pool.query(
         `INSERT INTO player_group_members (group_id, character_id, role)
          VALUES ($1, $2, $3)`,
         [groupId, characterId, 'member']
@@ -243,26 +243,26 @@ class MultiplayerService {
   async leaveGroup(groupId, characterId) {
     try {
       // Check if leader
-      const leaderResult = await db.query(
+      const leaderResult = await pool.query(
         `SELECT leader_id FROM player_groups WHERE id = $1`,
         [groupId]
       );
       
       if (leaderResult.rows[0].leader_id === characterId) {
         // Disband group if no other members
-        const memberCount = await db.query(
+        const memberCount = await pool.query(
           `SELECT COUNT(*) as count FROM player_group_members WHERE group_id = $1`,
           [groupId]
         );
         
         if (memberCount.rows[0].count <= 1) {
-          await db.query(`DELETE FROM player_groups WHERE id = $1`, [groupId]);
+          await pool.query(`DELETE FROM player_groups WHERE id = $1`, [groupId]);
           logger.info(`✅ Group ${groupId} disbanded`);
           return true;
         }
       }
       
-      await db.query(
+      await pool.query(
         `DELETE FROM player_group_members WHERE group_id = $1 AND character_id = $2`,
         [groupId, characterId]
       );
@@ -280,7 +280,7 @@ class MultiplayerService {
    */
   async getGroupDetails(groupId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           pg.*,
@@ -311,7 +311,7 @@ class MultiplayerService {
    */
   async getGroupMembers(groupId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           pgm.character_id,
@@ -341,7 +341,7 @@ class MultiplayerService {
    */
   async getCharacterGroups(characterId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           pg.id,
@@ -377,7 +377,7 @@ class MultiplayerService {
   async addFriend(initiatorId, targetId) {
     try {
       // Check if already friends
-      const existing = await db.query(
+      const existing = await pool.query(
         `
         SELECT id FROM player_interactions
         WHERE interaction_type = 'friend' 
@@ -391,7 +391,7 @@ class MultiplayerService {
         throw new Error('Already friends with this player');
       }
       
-      await db.query(
+      await pool.query(
         `
         INSERT INTO player_interactions (initiator_id, target_id, interaction_type)
         VALUES ($1, $2, 'friend')
@@ -412,7 +412,7 @@ class MultiplayerService {
    */
   async blockPlayer(initiatorId, targetId) {
     try {
-      await db.query(
+      await pool.query(
         `
         INSERT INTO player_interactions (initiator_id, target_id, interaction_type)
         VALUES ($1, $2, 'block')
@@ -434,7 +434,7 @@ class MultiplayerService {
    */
   async getFriends(characterId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           CASE 
@@ -472,7 +472,7 @@ class MultiplayerService {
    */
   async initializePvPRanking(characterId) {
     try {
-      await db.query(
+      await pool.query(
         `
         INSERT INTO pvp_rankings (character_id, mmr, arena_rank)
         VALUES ($1, 1000, 9999)
@@ -497,7 +497,7 @@ class MultiplayerService {
       const mmrLoss = options.mmrLoss || 20;
       
       // Update winner
-      await db.query(
+      await pool.query(
         `
         UPDATE pvp_rankings
         SET 
@@ -513,7 +513,7 @@ class MultiplayerService {
       );
       
       // Update loser
-      await db.query(
+      await pool.query(
         `
         UPDATE pvp_rankings
         SET 
@@ -540,7 +540,7 @@ class MultiplayerService {
    */
   async getPvPLeaderboard(limit = 100) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT * FROM pvp_leaderboard LIMIT $1`,
         [limit]
       );
@@ -557,7 +557,7 @@ class MultiplayerService {
    */
   async getCharacterPvPStats(characterId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           *,
@@ -586,7 +586,7 @@ class MultiplayerService {
    */
   async cleanupExpiredInstances() {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         DELETE FROM shared_instances
         WHERE expires_at < CURRENT_TIMESTAMP AND is_locked = FALSE
@@ -607,7 +607,7 @@ class MultiplayerService {
    */
   async updateParticipantActivity(instanceId, characterId) {
     try {
-      await db.query(
+      await pool.query(
         `
         UPDATE instance_participants
         SET last_active = CURRENT_TIMESTAMP
@@ -624,4 +624,5 @@ class MultiplayerService {
   }
 }
 
-module.exports = new MultiplayerService();
+export default new MultiplayerService();
+

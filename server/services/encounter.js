@@ -10,7 +10,7 @@
  * Scales difficulty based on party level and terrain
  */
 
-const { generateNarrative } = require('./gemini');
+import { generateNarrative } from './gemini.js';
 
 class EncounterService {
   /**
@@ -387,4 +387,4 @@ class EncounterService {
   }
 }
 
-module.exports = EncounterService;
+export default EncounterService;

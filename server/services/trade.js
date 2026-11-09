@@ -1,8 +1,8 @@
 // L'Occhio di Ophion - Trading Service
 // Manages secure item and currency trading between players
 
-const { db } = require('../config/database');
-const logger = require('../utils/logger');
+import pool from '../db/pool.js';
+import logger from '../utils/logger.js';
 
 class TradeService {
   // ==================== TRADE MANAGEMENT ====================
@@ -18,7 +18,7 @@ class TradeService {
       }
       
       // Verify target exists
-      const targetResult = await db.query(
+      const targetResult = await pool.query(
         `SELECT id FROM characters WHERE id = $1`,
         [targetId]
       );
@@ -28,7 +28,7 @@ class TradeService {
       }
       
       // Check for existing active trades
-      const existingTrade = await db.query(
+      const existingTrade = await pool.query(
         `
         SELECT id FROM trades
         WHERE (initiator_id = $1 AND target_id = $2)
@@ -48,7 +48,7 @@ class TradeService {
       }
       
       // Verify initiator has gold
-      const goldResult = await db.query(
+      const goldResult = await pool.query(
         `SELECT currency FROM character_attributes WHERE character_id = $1`,
         [initiatorId]
       );
@@ -58,7 +58,7 @@ class TradeService {
       }
       
       // Create trade
-      const result = await db.query(
+      const result = await pool.query(
         `
         INSERT INTO trades (initiator_id, target_id, initiator_items, initiator_gold)
         VALUES ($1, $2, $3, $4)
@@ -83,7 +83,7 @@ class TradeService {
   async addTradeOffer(tradeId, targetId, targetItems = [], targetGold = 0) {
     try {
       // Verify trade exists and belongs to target
-      const tradeResult = await db.query(
+      const tradeResult = await pool.query(
         `SELECT * FROM trades WHERE id = $1 AND target_id = $2`,
         [tradeId, targetId]
       );
@@ -103,7 +103,7 @@ class TradeService {
       }
       
       // Verify target has gold
-      const goldResult = await db.query(
+      const goldResult = await pool.query(
         `SELECT currency FROM character_attributes WHERE character_id = $1`,
         [targetId]
       );
@@ -113,7 +113,7 @@ class TradeService {
       }
       
       // Update trade with target's offer
-      await db.query(
+      await pool.query(
         `
         UPDATE trades
         SET target_items = $1, target_gold = $2
@@ -136,7 +136,7 @@ class TradeService {
   async acceptTrade(tradeId, characterId) {
     try {
       // Get trade details
-      const tradeResult = await db.query(
+      const tradeResult = await pool.query(
         `SELECT * FROM trades WHERE id = $1`,
         [tradeId]
       );
@@ -161,19 +161,19 @@ class TradeService {
       
       // Update acceptance status
       if (isInitiator) {
-        await db.query(
+        await pool.query(
           `UPDATE trades SET initiator_accepted = TRUE WHERE id = $1`,
           [tradeId]
         );
       } else {
-        await db.query(
+        await pool.query(
           `UPDATE trades SET target_accepted = TRUE WHERE id = $1`,
           [tradeId]
         );
       }
       
       // Check if both accepted
-      const updatedTrade = await db.query(
+      const updatedTrade = await pool.query(
         `SELECT * FROM trades WHERE id = $1`,
         [tradeId]
       );
@@ -197,7 +197,7 @@ class TradeService {
   async cancelTrade(tradeId, characterId) {
     try {
       // Verify character is involved in trade
-      const tradeResult = await db.query(
+      const tradeResult = await pool.query(
         `SELECT * FROM trades WHERE id = $1`,
         [tradeId]
       );
@@ -216,7 +216,7 @@ class TradeService {
         throw new Error('Cannot cancel completed or already cancelled trade');
       }
       
-      await db.query(
+      await pool.query(
         `UPDATE trades SET status = 'cancelled' WHERE id = $1`,
         [tradeId]
       );
@@ -235,7 +235,7 @@ class TradeService {
   async getTradeDetails(tradeId, characterId) {
     try {
       // Verify character is involved
-      const tradeResult = await db.query(
+      const tradeResult = await pool.query(
         `
         SELECT 
           t.*,
@@ -265,7 +265,7 @@ class TradeService {
    */
   async getPendingTrades(characterId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           t.id,
@@ -304,7 +304,7 @@ class TradeService {
    */
   async getTradeHistory(characterId, limit = 50) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT * FROM trade_history
         WHERE initiator_id = $1 OR target_id = $1
@@ -328,7 +328,7 @@ class TradeService {
   async executeTrade(tradeId) {
     try {
       // Get trade details
-      const tradeResult = await db.query(
+      const tradeResult = await pool.query(
         `SELECT * FROM trades WHERE id = $1 FOR UPDATE`,
         [tradeId]
       );
@@ -344,46 +344,46 @@ class TradeService {
       }
       
       // Start transaction
-      await db.query('BEGIN');
+      await pool.query('BEGIN');
       
       try {
         // Exchange gold
         if (trade.initiator_gold > 0) {
-          await db.query(
+          await pool.query(
             `UPDATE character_attributes SET currency = currency - $2 WHERE character_id = $1`,
             [trade.initiator_id, trade.initiator_gold]
           );
           
-          await db.query(
+          await pool.query(
             `UPDATE character_attributes SET currency = currency + $2 WHERE character_id = $1`,
             [trade.target_id, trade.initiator_gold]
           );
         }
         
         if (trade.target_gold > 0) {
-          await db.query(
+          await pool.query(
             `UPDATE character_attributes SET currency = currency - $2 WHERE character_id = $1`,
             [trade.target_id, trade.target_gold]
           );
           
-          await db.query(
+          await pool.query(
             `UPDATE character_attributes SET currency = currency + $2 WHERE character_id = $1`,
             [trade.initiator_id, trade.target_gold]
           );
         }
         
         // Mark as completed
-        await db.query(
+        await pool.query(
           `UPDATE trades SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1`,
           [tradeId]
         );
         
-        await db.query('COMMIT');
+        await pool.query('COMMIT');
         logger.info(`✅ Trade ${tradeId} completed successfully`);
         
         return true;
       } catch (error) {
-        await db.query('ROLLBACK');
+        await pool.query('ROLLBACK');
         throw error;
       }
     } catch (error) {
@@ -403,7 +403,7 @@ class TradeService {
       
       // In production, would check actual inventory
       // For now, simplified check
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT COUNT(*) as item_count FROM inventory WHERE character_id = $1`,
         [characterId]
       );
@@ -421,7 +421,7 @@ class TradeService {
    */
   async cleanupExpiredTrades() {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         UPDATE trades
         SET status = 'cancelled'
@@ -439,4 +439,5 @@ class TradeService {
   }
 }
 
-module.exports = new TradeService();
+export default new TradeService();
+

@@ -1,8 +1,8 @@
 // L'Occhio di Ophion - Guild Service
 // Manages guilds, memberships, treasury, and permissions
 
-const { db } = require('../config/database');
-const logger = require('../utils/logger');
+import pool from '../db/pool.js';
+import logger from '../utils/logger.js';
 
 class GuildService {
   // ==================== GUILD MANAGEMENT ====================
@@ -13,7 +13,7 @@ class GuildService {
   async createGuild(founderId, guildName, description = '') {
     try {
       // Check name uniqueness
-      const existing = await db.query(
+      const existing = await pool.query(
         `SELECT id FROM guilds WHERE LOWER(guild_name) = LOWER($1)`,
         [guildName]
       );
@@ -22,7 +22,7 @@ class GuildService {
         throw new Error('Guild name already exists');
       }
       
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT create_guild($1, $2, $3) AS guild_id
         `,
@@ -45,7 +45,7 @@ class GuildService {
   async disbandGuild(guildId, characterId) {
     try {
       // Verify founder
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT founder_id FROM guilds WHERE id = $1`,
         [guildId]
       );
@@ -59,7 +59,7 @@ class GuildService {
       }
       
       // Delete guild (cascades to members, treasury, logs)
-      await db.query(`DELETE FROM guilds WHERE id = $1`, [guildId]);
+      await pool.query(`DELETE FROM guilds WHERE id = $1`, [guildId]);
       
       logger.info(`✅ Guild ${guildId} disbanded by ${characterId}`);
       return true;
@@ -74,7 +74,7 @@ class GuildService {
    */
   async getGuildDetails(guildId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           g.*,
@@ -102,7 +102,7 @@ class GuildService {
    */
   async searchGuilds(searchTerm, limit = 20) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           g.id,
@@ -135,7 +135,7 @@ class GuildService {
    */
   async joinGuild(guildId, characterId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT join_guild($1, $2) AS success`,
         [guildId, characterId]
       );
@@ -158,7 +158,7 @@ class GuildService {
   async leaveGuild(guildId, characterId) {
     try {
       // Check if founder
-      const guildResult = await db.query(
+      const guildResult = await pool.query(
         `SELECT founder_id FROM guilds WHERE id = $1`,
         [guildId]
       );
@@ -168,13 +168,13 @@ class GuildService {
       }
       
       // Remove member
-      await db.query(
+      await pool.query(
         `DELETE FROM guild_members WHERE guild_id = $1 AND character_id = $2`,
         [guildId, characterId]
       );
       
       // Decrease member count
-      await db.query(
+      await pool.query(
         `UPDATE guilds SET current_member_count = GREATEST(1, current_member_count - 1) WHERE id = $1`,
         [guildId]
       );
@@ -195,7 +195,7 @@ class GuildService {
    */
   async getGuildMembers(guildId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT * FROM guild_members_view WHERE guild_id = $1`,
         [guildId]
       );
@@ -212,7 +212,7 @@ class GuildService {
    */
   async getCharacterGuild(characterId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           g.*,
@@ -244,7 +244,7 @@ class GuildService {
   async changeMemberRank(guildId, targetCharacterId, newRank, authorityId) {
     try {
       // Verify authority (officer or founder)
-      const authResult = await db.query(
+      const authResult = await pool.query(
         `
         SELECT rank FROM guild_members
         WHERE guild_id = $1 AND character_id = $2
@@ -267,7 +267,7 @@ class GuildService {
       }
       
       // Cannot demote founder
-      const targetResult = await db.query(
+      const targetResult = await pool.query(
         `SELECT rank FROM guild_members WHERE guild_id = $1 AND character_id = $2`,
         [guildId, targetCharacterId]
       );
@@ -276,7 +276,7 @@ class GuildService {
         throw new Error('Cannot change founder rank');
       }
       
-      await db.query(
+      await pool.query(
         `UPDATE guild_members SET rank = $1, updated_at = CURRENT_TIMESTAMP
          WHERE guild_id = $2 AND character_id = $3`,
         [newRank, guildId, targetCharacterId]
@@ -300,7 +300,7 @@ class GuildService {
    */
   async addContributionPoints(guildId, characterId, points) {
     try {
-      await db.query(
+      await pool.query(
         `
         UPDATE guild_members
         SET contribution_points = contribution_points + $3
@@ -311,7 +311,7 @@ class GuildService {
       
       // Update guild experience
       const expMultiplier = 10;
-      await db.query(
+      await pool.query(
         `
         UPDATE guilds
         SET experience = experience + $2
@@ -335,7 +335,7 @@ class GuildService {
    */
   async getTreasury(guildId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `SELECT * FROM guild_treasury WHERE guild_id = $1`,
         [guildId]
       );
@@ -357,27 +357,27 @@ class GuildService {
   async depositGold(guildId, characterId, amount) {
     try {
       // Start transaction
-      await db.query('BEGIN');
+      await pool.query('BEGIN');
       
       // Verify character has gold
-      const charResult = await db.query(
+      const charResult = await pool.query(
         `SELECT currency FROM character_attributes WHERE character_id = $1`,
         [characterId]
       );
       
       if (charResult.rows[0].currency < amount) {
-        await db.query('ROLLBACK');
+        await pool.query('ROLLBACK');
         throw new Error('Insufficient gold');
       }
       
       // Deduct from character
-      await db.query(
+      await pool.query(
         `UPDATE character_attributes SET currency = currency - $2 WHERE character_id = $1`,
         [characterId, amount]
       );
       
       // Add to treasury
-      await db.query(
+      await pool.query(
         `UPDATE guild_treasury SET gold_amount = gold_amount + $2 WHERE guild_id = $1`,
         [guildId, amount]
       );
@@ -388,12 +388,12 @@ class GuildService {
         type: 'gold'
       });
       
-      await db.query('COMMIT');
+      await pool.query('COMMIT');
       
       logger.info(`✅ Deposited ${amount} gold to guild ${guildId}`);
       return true;
     } catch (error) {
-      await db.query('ROLLBACK').catch(() => {});
+      await pool.query('ROLLBACK').catch(() => {});
       logger.error(`❌ Failed to deposit gold: ${error.message}`);
       throw error;
     }
@@ -405,7 +405,7 @@ class GuildService {
   async withdrawGold(guildId, characterId, amount) {
     try {
       // Verify rank
-      const rankResult = await db.query(
+      const rankResult = await pool.query(
         `SELECT rank FROM guild_members WHERE guild_id = $1 AND character_id = $2`,
         [guildId, characterId]
       );
@@ -420,27 +420,27 @@ class GuildService {
       }
       
       // Start transaction
-      await db.query('BEGIN');
+      await pool.query('BEGIN');
       
       // Verify treasury has funds
-      const treasuryResult = await db.query(
+      const treasuryResult = await pool.query(
         `SELECT gold_amount FROM guild_treasury WHERE guild_id = $1`,
         [guildId]
       );
       
       if (treasuryResult.rows[0].gold_amount < amount) {
-        await db.query('ROLLBACK');
+        await pool.query('ROLLBACK');
         throw new Error('Insufficient funds in treasury');
       }
       
       // Deduct from treasury
-      await db.query(
+      await pool.query(
         `UPDATE guild_treasury SET gold_amount = gold_amount - $2 WHERE guild_id = $1`,
         [guildId, amount]
       );
       
       // Add to character
-      await db.query(
+      await pool.query(
         `UPDATE character_attributes SET currency = currency + $2 WHERE character_id = $1`,
         [characterId, amount]
       );
@@ -451,12 +451,12 @@ class GuildService {
         type: 'gold'
       });
       
-      await db.query('COMMIT');
+      await pool.query('COMMIT');
       
       logger.info(`✅ Withdrew ${amount} gold from guild ${guildId}`);
       return true;
     } catch (error) {
-      await db.query('ROLLBACK').catch(() => {});
+      await pool.query('ROLLBACK').catch(() => {});
       logger.error(`❌ Failed to withdraw gold: ${error.message}`);
       throw error;
     }
@@ -469,7 +469,7 @@ class GuildService {
    */
   async logGuildAction(guildId, actorId, actionType, details = {}) {
     try {
-      await db.query(
+      await pool.query(
         `
         INSERT INTO guild_logs (guild_id, actor_id, action_type, action_details)
         VALUES ($1, $2, $3, $4)
@@ -489,7 +489,7 @@ class GuildService {
    */
   async getGuildLogs(guildId, limit = 100) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT 
           gl.*,
@@ -517,7 +517,7 @@ class GuildService {
    */
   async levelUpGuild(guildId) {
     try {
-      const result = await db.query(
+      const result = await pool.query(
         `
         SELECT level, experience FROM guilds WHERE id = $1
         `,
@@ -536,7 +536,7 @@ class GuildService {
       }
       
       // Level up and reset experience
-      await db.query(
+      await pool.query(
         `
         UPDATE guilds
         SET level = level + 1, experience = 0
@@ -546,7 +546,7 @@ class GuildService {
       );
       
       // Increase max members by 10
-      await db.query(
+      await pool.query(
         `UPDATE guilds SET max_members = max_members + 10 WHERE id = $1`,
         [guildId]
       );
@@ -560,4 +560,5 @@ class GuildService {
   }
 }
 
-module.exports = new GuildService();
+export default new GuildService();
+
