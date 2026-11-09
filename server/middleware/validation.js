@@ -58,3 +58,5 @@ export function validateUUID(paramName) {
     next();
   };
 }
+
+export default validateCharacterCreation;

@@ -110,3 +110,5 @@ export const asyncHandler = (fn) => (req, res, next) => {
 };
 
 export { ERROR_CODES };
+
+export default errorHandler;
