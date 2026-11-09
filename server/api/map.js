@@ -7,12 +7,12 @@
  * - Tracking discovered locations
  */
 
-const express = require('express');
+import express from 'express';
+import MapService from '../services/map.js';
+import TravelService from '../services/travel.js';
+import { asyncHandler, AppError } from '../middleware/errorHandler.js';
+
 const router = express.Router();
-const MapService = require('../services/map');
-const TravelService = require('../services/travel');
-const { asyncHandler } = require('../middleware/errorHandler');
-const { AppError } = require('../middleware/errorHandler');
 
 /**
  * GET /api/map/nodes
@@ -308,4 +308,4 @@ router.get('/summary', asyncHandler(async (req, res) => {
   });
 }));
 
-module.exports = router;
+export default router;

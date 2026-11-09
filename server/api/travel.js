@@ -8,12 +8,12 @@
  * - Checking current status
  */
 
-const express = require('express');
+import express from 'express';
+import TravelService from '../services/travel.js';
+import MapService from '../services/map.js';
+import { asyncHandler, AppError } from '../middleware/errorHandler.js';
+
 const router = express.Router();
-const TravelService = require('../services/travel');
-const MapService = require('../services/map');
-const { asyncHandler } = require('../middleware/errorHandler');
-const { AppError } = require('../middleware/errorHandler');
 
 /**
  * POST /api/travel/initiate
@@ -371,4 +371,4 @@ router.get('/statistics', asyncHandler(async (req, res) => {
   });
 }));
 
-module.exports = router;
+export default router;

@@ -1,13 +1,14 @@
 // L'Occhio di Ophion - Multiplayer API Endpoints
 // REST API for multiplayer features: instances, groups, guilds, trades, PvP
 
-const express = require('express');
+import express from 'express';
+import auth from '../middleware/auth.js';
+import MultiplayerService from '../services/multiplayer.js';
+import GuildService from '../services/guild.js';
+import TradeService from '../services/trade.js';
+import logger from '../utils/logger.js';
+
 const router = express.Router();
-const auth = require('../middleware/auth');
-const MultiplayerService = require('../services/multiplayer');
-const GuildService = require('../services/guild');
-const TradeService = require('../services/trade');
-const logger = require('../utils/logger');
 
 // ==================== SHARED INSTANCES ====================
 
@@ -659,4 +660,4 @@ router.get('/trades/history', auth.required, async (req, res) => {
   }
 });
 
-module.exports = router;
+  export default router;
